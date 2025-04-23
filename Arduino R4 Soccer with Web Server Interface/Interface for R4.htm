@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BLE Motor Control</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; }
+    button { padding: 20px; margin: 10px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <h1>BLE Motor Controller</h1>
+  <button onclick="sendCommand('forward')">⬆️ Forward</button><br>
+  <button onclick="sendCommand('left')">⬅️ Left</button>
+  <button onclick="sendCommand('right')">➡️ Right</button><br>
+  <button onclick="sendCommand('backward')">⬇️ Backward</button><br>
+  <button onclick="sendCommand('stop')">⏹ Stop</button><br><br>
+  <button onclick="connect()">🔗 Connect</button>
+
+  <script>
+    let bleDevice, bleServer, commandChar;
+
+    async function connect() {
+      const serviceUUID = '180a';
+      const characteristicUUID = '2a57';
+      try {
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ name: 'ArduinoR4Motor' }],
+          optionalServices: [serviceUUID]
+        });
+        bleServer = await bleDevice.gatt.connect();
+        const service = await bleServer.getPrimaryService(serviceUUID);
+        commandChar = await service.getCharacteristic(characteristicUUID);
+        alert('Connected to ArduinoR4Motor!');
+      } catch (err) {
+        alert('Connection failed: ' + err);
+      }
+    }
+
+    async function sendCommand(cmd) {
+      if (commandChar) {
+        const encoder = new TextEncoder();
+        await commandChar.writeValue(encoder.encode(cmd));
+        console.log('Sent:', cmd);
+      } else {
+        alert('Connect to BLE device first!');
+      }
+    }
+  </script>
+</body>
+</html>
